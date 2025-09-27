@@ -1,0 +1,32 @@
+gcp:
+project_id: "max-sm-ingest-dev"
+region: "us-central1"
+zone: "us-central1-a"
+
+# Cloud Run Configuration
+service_name: "etl-dispatcher"
+job_name: "etl-processor"
+#service_url: "https://etl-dispatcher-xxxxx-uc.a.run.app"
+
+# Database Configuration
+database:
+  url: "mysql+pymysql://username:password@host:3306/database_name"
+  host: "your-mysql-host"
+  port: 3306
+  username: "your-username"
+  password: "your-password"
+  database: "your-database"
+
+# GCS Configuration
+gcs:
+  bucket_name: "sm-ingest-dev-8"
+  import_path: "imports"
+
+# VPC Configuration (if using private database)
+vpc:
+  connector_name: "etl-vpc-connector"
+  connector_region: "us-central1"
+
+# Service Account
+service_account: "cloudrun-storage-processor@max-sm-ingest-dev.iam.gserviceaccount.com"
+

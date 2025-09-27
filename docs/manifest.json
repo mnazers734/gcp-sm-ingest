@@ -1,0 +1,12 @@
+{
+"load_id": "2025-08-22_partnerA",
+"files": [
+{"name": "customers.csv", "rows": 1234, "sha256": "d6f1a97..."},
+{"name": "vehicles.csv", "rows": 2311, "sha256": "b781f89..."},
+{"name": "invoices.csv", "rows": 856, "sha256": "c892a45..."},
+{"name": "line_items.csv", "rows": 3420, "sha256": "e123b78..."},
+{"name": "payments.csv", "rows": 856, "sha256": "f456c91..."},
+{"name": "inventory_parts.csv", "rows": 0, "sha256": "a789d23..."},
+{"name": "suppliers.csv", "rows": 45, "sha256": "b234e56..."}
+]
+}
