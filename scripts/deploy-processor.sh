@@ -14,12 +14,13 @@ echo "Deploying Cloud Run Job: $JOB_NAME"
 gcloud run jobs deploy "$JOB_NAME" \
   --source src/processor \
   --region="$GCP_REGION" \
+  --project="$GCP_PROJECT" \
   --service-account="$SERVICE_ACCOUNT" \
   --set-env-vars="GCP_PROJECT=$GCP_PROJECT,GCP_REGION=$GCP_REGION,STORAGE_BUCKET=$STORAGE_BUCKET" \
   --cpu=2 \
   --memory=4Gi \
   --max-retries=3 \
   --command="python" \
-  --args="main.py" \
+  --args="test_simple.py" \
 
 echo "Deployment complete!"
