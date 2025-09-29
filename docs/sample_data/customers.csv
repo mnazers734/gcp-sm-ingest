@@ -1,0 +1,11 @@
+sourceAppName,externalShopId,externalCustomerId,firstName,lastName,streetAddress1,streetAddress2,country,state,city,zipCode,contactCell,contactWork,contactHome,contactEmail,preferredContact,authorizerFirstName,authorizerLastName,authorizerPhone,defaultLaborRate,doNotChargeTax,customerType
+Tekmetric,15522,CUST-101,Maria,Garcia,856 Oak St,,USA,CA,Los Angeles,90001,2135550101,2135550201,2135550301,maria.g@email.com,Cell,Maria,Garcia,2135550101,150.00,0,Individual
+Tekmetric,15522,CUST-102,David,Smith,432 Maple Ave,,USA,CA,San Francisco,94102,4155550102,4155550202,4155550302,david.s@email.com,Email,David,Smith,4155550102,150.00,0,Individual
+Tekmetric,15522,CUST-103,Jennifer,Rodriguez,789 Pine Ln,Apt B,USA,CA,San Diego,92101,6195550103,6195550203,6195550303,jen.r@email.com,Cell,Jennifer,Rodriguez,6195550103,150.00,0,Individual
+Tekmetric,15522,CUST-104,Michael,Johnson,101 Birch Rd,,USA,CA,Sacramento,95814,9165550104,9165550204,9165550304,mike.j@email.com,Work,Michael,Johnson,9165550104,150.00,0,Individual
+Tekmetric,15522,CUST-105,Linda,Williams,212 Cedar Blvd,,USA,NY,New York,10001,2125550105,2125550205,2125550305,linda.w@email.com,Cell,Linda,Williams,2125550105,165.00,0,Individual
+Tekmetric,15522,CUST-106,Robert,Brown,333 Elm Ct,,USA,NY,Buffalo,14201,7165550106,7165550206,7165550306,robert.b@email.com,Email,Robert,Brown,7165550106,165.00,0,Individual
+Tekmetric,15522,CUST-107,Patricia,Jones,444 Spruce Way,,USA,TX,Houston,77001,7135550107,7135550207,7135550307,pat.j@email.com,Cell,Patricia,Jones,7135550107,145.00,0,Individual
+Tekmetric,15522,CUST-108,James,Miller,555 Redwood Dr,,USA,TX,Dallas,75201,2145550108,2145550208,2145550308,james.m@email.com,Home,James,Miller,2145550108,145.00,0,Individual
+Tekmetric,15522,CUST-109,Barbara,Davis,666 Willow Pass,,USA,FL,Miami,33101,3055550109,3055550209,3055550309,barb.d@email.com,Cell,Barbara,Davis,3055550109,160.00,1,Individual
+Tekmetric,15522,CUST-110,William,Wilson,777 Sequoia Ave,,USA,FL,Orlando,32801,4075550110,4075550210,4075550310,will.w@email.com,Email,William,Wilson,4075550110,160.00,0,Individual

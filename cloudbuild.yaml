@@ -1,0 +1,26 @@
+steps:
+  # Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/etl-processor', './src/processor']
+  
+  # Push the image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/etl-processor']
+  
+  # Deploy the Cloud Run Job
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'jobs'
+      - 'deploy'
+      - 'etl-processor'
+      - '--image=gcr.io/$PROJECT_ID/etl-processor'
+      - '--region=us-central1'
+      - '--service-account=cloudrun-storage-processor@max-sm-ingest-dev.iam.gserviceaccount.com'
+      - '--set-env-vars=GCP_PROJECT=$PROJECT_ID,GCP_REGION=us-central1,STORAGE_BUCKET=sm-ingest-dev-8'
+      - '--cpu=2'
+      - '--memory=4Gi'
+      - '--max-retries=3'
+      - '--command=python'
+      - '--args=main.py'

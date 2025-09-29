@@ -18,6 +18,8 @@ gcloud run jobs deploy "$JOB_NAME" \
   --set-env-vars="GCP_PROJECT=$GCP_PROJECT,GCP_REGION=$GCP_REGION,STORAGE_BUCKET=$STORAGE_BUCKET" \
   --cpu=2 \
   --memory=4Gi \
-  --max-retries=3
+  --max-retries=3 \
+  --command="python" \
+  --args="main.py" \
 
 echo "Deployment complete!"

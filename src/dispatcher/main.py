@@ -78,13 +78,12 @@ class ETLDispatcher:
             
             # Extract load information from path
             path_parts = object_name.split('/')
-            if len(path_parts) < 4:
+            if len(path_parts) < 3:
                 logger.error(f"Invalid path structure: {object_name}")
                 return {'status': 'error', 'reason': 'invalid_path_structure'}
             
             partner_id = path_parts[1]  # imports/{partner_id}/...
-            shop_id = path_parts[2]     # imports/{partner_id}/{shop_id}/...
-            load_id = path_parts[3]     # imports/{partner_id}/{shop_id}/{load_id}/...
+            load_id = path_parts[2]     # imports/{partner_id}/{load_id}/...
             
             # Download and validate manifest
             manifest_data = self._download_and_validate_manifest(bucket_name, object_name)
@@ -97,14 +96,22 @@ class ETLDispatcher:
                 return {'status': 'error', 'reason': 'missing_required_files', 'details': file_validation}
             
             # Launch ETL job
-            job_result = self._launch_etl_job(partner_id, shop_id, load_id, manifest_data)
+            job_result = self._launch_etl_job(partner_id, load_id, manifest_data)
+            
+            # Extract processing plan for response
+            processing_plan = manifest_data.get('processing_plan', {})
             
             return {
                 'status': 'success',
                 'load_id': load_id,
                 'partner_id': partner_id,
-                'shop_id': shop_id,
                 'job_name': job_result.get('name'),
+                'processing_summary': {
+                    'files_to_process': processing_plan.get('files_to_process', 0),
+                    'files_to_skip': processing_plan.get('files_to_skip', 0),
+                    'total_rows': processing_plan.get('total_rows', 0),
+                    'processing_groups': len(processing_plan.get('processing_groups', {}))
+                },
                 'timestamp': datetime.now().isoformat()
             }
             
@@ -141,12 +148,126 @@ class ETLDispatcher:
                     logger.error(f"File entry missing required fields: {file_info}")
                     return None
             
-            logger.info(f"Manifest validated: {len(files)} files")
+            # Process manifest to determine which files need processing
+            processing_plan = self._create_processing_plan(manifest_data)
+            manifest_data['processing_plan'] = processing_plan
+            
+            logger.info(f"Manifest validated: {len(files)} files, processing plan created")
             return manifest_data
             
         except Exception as e:
             logger.error(f"Failed to download/validate manifest: {e}")
             return None
+    
+    def _create_processing_plan(self, manifest_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Create a processing plan based on manifest data.
+        
+        Determines which CSV files need processing based on row counts and
+        creates a dependency-ordered processing plan.
+        
+        Args:
+            manifest_data: Parsed manifest.json data
+            
+        Returns:
+            Dictionary containing processing plan with file information and order
+        """
+        files = manifest_data.get('files', [])
+        
+        # Define file processing order and dependencies
+        # Customer is always required (never empty)
+        # Vehicle depends on Customer
+        # Invoice depends on Vehicle  
+        # Line Item depends on Invoice
+        # Payments depends on Invoice
+        # Inventory Parts and Suppliers are independent
+        
+        processing_order = [
+            'customers.csv',      # Always required, never empty
+            'vehicles.csv',       # Depends on customers
+            'invoices.csv',       # Depends on vehicles  
+            'line_items.csv',     # Depends on invoices
+            'payments.csv',       # Depends on invoices
+            'inventory_parts.csv', # Independent
+            'suppliers.csv'       # Independent
+        ]
+        
+        # Create file lookup by name
+        file_lookup = {file_info['name']: file_info for file_info in files}
+        
+        # Determine which files need processing (non-zero row count)
+        files_to_process = []
+        files_to_skip = []
+        
+        for filename in processing_order:
+            if filename in file_lookup:
+                file_info = file_lookup[filename]
+                row_count = file_info.get('rows', 0)
+                
+                if row_count > 0:
+                    files_to_process.append({
+                        'name': filename,
+                        'rows': row_count,
+                        'sha256': file_info.get('sha256', ''),
+                        'status': 'to_process'
+                    })
+                    logger.info(f"File {filename}: {row_count} rows - WILL PROCESS")
+                else:
+                    files_to_skip.append({
+                        'name': filename,
+                        'rows': 0,
+                        'sha256': file_info.get('sha256', ''),
+                        'status': 'skip_empty'
+                    })
+                    logger.info(f"File {filename}: 0 rows - SKIP (empty file)")
+            else:
+                logger.warning(f"Required file {filename} not found in manifest")
+                files_to_skip.append({
+                    'name': filename,
+                    'rows': 0,
+                    'sha256': '',
+                    'status': 'missing'
+                })
+        
+        # Create dependency groups for processing
+        dependency_groups = {
+            'group_1': ['customers.csv'],  # Always first
+            'group_2': ['vehicles.csv'],    # Depends on customers
+            'group_3': ['invoices.csv'],   # Depends on vehicles
+            'group_4': ['line_items.csv', 'payments.csv'],  # Both depend on invoices
+            'group_5': ['inventory_parts.csv', 'suppliers.csv']  # Independent
+        }
+        
+        # Organize files by dependency groups
+        processing_groups = {}
+        for group_name, filenames in dependency_groups.items():
+            group_files = []
+            for filename in filenames:
+                file_info = next((f for f in files_to_process if f['name'] == filename), None)
+                if file_info:
+                    group_files.append(file_info)
+            if group_files:
+                processing_groups[group_name] = group_files
+        
+        # Calculate total rows for processing
+        total_rows = sum(file_info['rows'] for file_info in files_to_process)
+        
+        processing_plan = {
+            'load_id': manifest_data.get('load_id'),
+            'total_files': len(files),
+            'files_to_process': len(files_to_process),
+            'files_to_skip': len(files_to_skip),
+            'total_rows': total_rows,
+            'processing_groups': processing_groups,
+            'files_to_process': files_to_process,
+            'files_to_skip': files_to_skip,
+            'processing_order': processing_order
+        }
+        
+        logger.info(f"Processing plan created: {len(files_to_process)} files to process, "
+                   f"{len(files_to_skip)} files to skip, {total_rows} total rows")
+        
+        return processing_plan
     
     def _validate_required_files(self, bucket_name: str, path_parts: list) -> Dict[str, Any]:
         """Validate that all required CSV files are present."""
@@ -185,19 +306,34 @@ class ETLDispatcher:
             'total_present': len(present_files)
         }
     
-    def _launch_etl_job(self, partner_id: str, shop_id: str, load_id: str, manifest_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _launch_etl_job(self, partner_id: str, load_id: str, manifest_data: Dict[str, Any]) -> Dict[str, Any]:
         """Launch Cloud Run Job for ETL processing."""
         try:
             # Prepare job execution request
             job_path = f"projects/{self.project_id}/locations/{self.region}/jobs/{self.job_name}"
             
+            # Extract processing plan from manifest data
+            processing_plan = manifest_data.get('processing_plan', {})
+            
             # Set environment variables for the job
             env_vars = {
                 'LOAD_ID': load_id,
                 'PARTNER_ID': partner_id,
-                'SHOP_ID': shop_id,
-                'MANIFEST_DATA': json.dumps(manifest_data)
+                'MANIFEST_DATA': json.dumps(manifest_data),
+                'PROCESSING_PLAN': json.dumps(processing_plan),
+                'FILES_TO_PROCESS': json.dumps(processing_plan.get('files_to_process', [])),
+                'FILES_TO_SKIP': json.dumps(processing_plan.get('files_to_skip', [])),
+                'PROCESSING_GROUPS': json.dumps(processing_plan.get('processing_groups', {})),
+                'TOTAL_ROWS': str(processing_plan.get('total_rows', 0)),
+                'FILES_COUNT': str(processing_plan.get('files_to_process', 0))
             }
+            
+            # Log processing plan details
+            logger.info(f"Launching ETL job with processing plan:")
+            logger.info(f"  - Files to process: {processing_plan.get('files_to_process', 0)}")
+            logger.info(f"  - Files to skip: {processing_plan.get('files_to_skip', 0)}")
+            logger.info(f"  - Total rows: {processing_plan.get('total_rows', 0)}")
+            logger.info(f"  - Processing groups: {len(processing_plan.get('processing_groups', {}))}")
             
             # Create execution request
             execution_request = run_v2.RunJobRequest(
@@ -217,12 +353,13 @@ class ETLDispatcher:
             
             # Execute the job
             operation = run_client.run_job(request=execution_request)
-            logger.info(f"ETL job launched: {operation.name}")
+            logger.info(f"ETL job launched successfully")
             
             return {
-                'name': operation.name,
+                'job_path': job_path,
                 'status': 'launched',
-                'load_id': load_id
+                'load_id': load_id,
+                'processing_plan': processing_plan
             }
             
         except Exception as e:
@@ -279,19 +416,18 @@ def handle_gcs_event():
         return jsonify({'status': 'error', 'reason': str(e)}), 500
 
 
-@app.route('/trigger/<partner_id>/<shop_id>/<load_id>', methods=['POST'])
-def manual_trigger(partner_id: str, shop_id: str, load_id: str):
+@app.route('/trigger/<partner_id>/<load_id>', methods=['POST'])
+def manual_trigger(partner_id: str, load_id: str):
     """
     Manual trigger endpoint for testing.
     
     Args:
         partner_id: Partner identifier
-        shop_id: Shop identifier  
         load_id: Load identifier
     """
     try:
         # Construct manifest path
-        manifest_path = f"imports/{partner_id}/{shop_id}/{load_id}/manifest.json"
+        manifest_path = f"imports/{partner_id}/{load_id}/manifest.json"
         
         # Create mock event data
         event_data = {
@@ -323,6 +459,38 @@ def get_load_status(load_id: str):
         
     except Exception as e:
         logger.error(f"Error getting load status: {e}")
+        return jsonify({'status': 'error', 'reason': str(e)}), 500
+
+
+@app.route('/processing-plan/<partner_id>/<load_id>', methods=['GET'])
+def get_processing_plan(partner_id: str, load_id: str):
+    """
+    Get detailed processing plan for a specific load.
+    
+    This endpoint allows inspection of what files will be processed
+    and in what order based on the manifest.
+    """
+    try:
+        # Construct manifest path
+        manifest_path = f"imports/{partner_id}/{load_id}/manifest.json"
+        
+        # Download and process manifest
+        manifest_data = get_dispatcher()._download_and_validate_manifest(GCS_BUCKET, manifest_path)
+        
+        if not manifest_data:
+            return jsonify({'status': 'error', 'reason': 'manifest_not_found'}), 404
+        
+        processing_plan = manifest_data.get('processing_plan', {})
+        
+        return jsonify({
+            'load_id': load_id,
+            'partner_id': partner_id,
+            'processing_plan': processing_plan,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting processing plan: {e}")
         return jsonify({'status': 'error', 'reason': str(e)}), 500
 
 

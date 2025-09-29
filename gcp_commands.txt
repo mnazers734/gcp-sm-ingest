@@ -1,0 +1,35 @@
+# Deploy to Cloud Run using buildpacks
+  gcloud run deploy gcp-sm-ingest \
+    --source . \
+    --platform managed \
+    --region us-central1 \
+    --service-account cloudrun-storage-processor@max-sm-ingest-dev.iam.gserviceaccount.com \
+    --allow-unauthenticated 
+
+#authenticate to GCP
+gcloud auth login
+gcloud config get project
+gcloud config set project max-sm-ingest-dev
+
+gcloud projects add-iam-policy-binding $(gcloud config
+  get-value project) \
+      --member="serviceAccount:service-306554071669@gs-project-accounts.iam.gserviceaccount.com" \
+      --role="roles/pubsub.publisher"
+
+Typical Service Account Organization
+  - Cloud Run services: One SA per service or group of
+  related services
+  - Batch jobs: Dedicated SA with specific permissions
+  - CI/CD: Separate SA for deployment operations
+  - Data processing: SA with only storage/database
+  permissions needed
+
+
+gcloud eventarc triggers create gcp-sm-ingest-trigger \
+      --destination-run-service=gcp-sm-ingest \
+      --destination-run-region=us-central1 \
+      --destination-run-path=/storage-event \
+      --location=us-central1 \
+      --event-filters="type=google.cloud.storage.object.v1.finalized" \
+      --event-filters="bucket=sm-ingest-dev-8" \
+      --service-account=cloudrun-storage-processor@max-sm-ingest-dev.iam.gserviceaccount.com
