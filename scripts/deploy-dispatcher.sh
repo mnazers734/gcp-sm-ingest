@@ -10,6 +10,7 @@ SERVICE_NAME=$(grep "service_name:" "$CONFIG_FILE" | cut -d'"' -f2 | xargs)
 STORAGE_BUCKET=$(grep "bucket_name:" "$CONFIG_FILE" | cut -d'"' -f2 | xargs)
 SERVICE_ACCOUNT=$(grep "service_account:" "$CONFIG_FILE" | cut -d'"' -f2 | xargs)
 JOB_NAME=$(grep "job_name:" "$CONFIG_FILE" | cut -d'"' -f2 | xargs)
+BUILD_SERVICE_ACCOUNT=$(grep "build_service_account:" "$CONFIG_FILE" | cut -d'"' -f2 | xargs) 
 
 echo "DEBUG - Variables loaded:"
 echo "GCP_PROJECT: '$GCP_PROJECT'"

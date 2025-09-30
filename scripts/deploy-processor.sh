@@ -7,7 +7,6 @@ GCP_PROJECT=$(grep "project_id:" "$CONFIG_FILE" | cut -d'"' -f2 | xargs)
 GCP_REGION=$(grep "^region:" "$CONFIG_FILE" | cut -d'"' -f2 | xargs)
 JOB_NAME=$(grep "job_name:" "$CONFIG_FILE" | cut -d'"' -f2 | xargs)
 STORAGE_BUCKET=$(grep "bucket_name:" "$CONFIG_FILE" | cut -d'"' -f2 | xargs)
-SERVICE_ACCOUNT=$(grep "service_account:" "$CONFIG_FILE" | cut -d'"' -f2 | xargs)
 
 echo "Deploying Cloud Run Job: $JOB_NAME"
 

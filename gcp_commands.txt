@@ -33,3 +33,6 @@ gcloud eventarc triggers create gcp-sm-ingest-trigger \
       --event-filters="type=google.cloud.storage.object.v1.finalized" \
       --event-filters="bucket=sm-ingest-dev-8" \
       --service-account=cloudrun-storage-processor@max-sm-ingest-dev.iam.gserviceaccount.com
+
+cloud run services describe gcp-sm-ingest --region=us-central1 --format=json
+gcloud artifacts repositories list --repository-format=docker --project="max-sm-ingest-dev"
