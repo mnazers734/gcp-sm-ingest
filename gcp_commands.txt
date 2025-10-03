@@ -36,3 +36,7 @@ gcloud eventarc triggers create gcp-sm-ingest-trigger \
 
 cloud run services describe gcp-sm-ingest --region=us-central1 --format=json
 gcloud artifacts repositories list --repository-format=docker --project="max-sm-ingest-dev"
+
+gcloud builds submit --tag "us-central1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/$JOB_NAME:latest" .
+gcloud builds submit --tag "us-central1-docker.pkg.dev/max-sm-ingest-dev/cloud-run-source-deploy/etl-processor:latest" .
+
