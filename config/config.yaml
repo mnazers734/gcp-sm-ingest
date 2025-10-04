@@ -1,5 +1,5 @@
 gcp:
-project_id: "max-sm-ingest-dev"
+project_id: "addv1-td-alldata-app"
 region: "us-central1"
 zone: "us-central1-a"
 
@@ -19,7 +19,7 @@ database:
 
 # GCS Configuration
 gcs:
-  bucket_name: "sm-ingest-dev-8"
+  bucket_name: "sm-ingest-dev"
   import_path: "imports"
 
 # VPC Configuration (if using private database)
@@ -28,5 +28,6 @@ vpc:
   connector_region: "us-central1"
 
 # Service Account
-service_account: "cloudrun-storage-processor@max-sm-ingest-dev.iam.gserviceaccount.com"
+service_account: "shop-pro-functions-sa@addv1-td-alldata-app.iam.gserviceaccount.com"
+build_service_account: "projects/adst1-td-alldata-app/serviceAccounts/mobile-team-service-account@adst1-td-alldata-app.iam.gserviceaccount.com"
 

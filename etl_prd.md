@@ -49,9 +49,9 @@ Create a serverless, cloud-native ETL system that safely ingests mapped CSV expo
 ### 4.1 Functional Requirements
 
 #### Core Data Processing
-- **FR-1:** Ingest CSV files for six entity types: Customer, Vehicle, Invoice (Document), Line Item, Payments, Inventory Parts, and Suppliers
+- **FR-1:** Ingest 7 CSV files Customer, Vehicle, Invoice (Document), Line Item, Payments, Inventory Parts, and Suppliers for five entity types: Customer, Vehicle, Invoice (Document), Line Item, Payments
 - **FR-2:** Preserve parent-child relationships (Customer→Vehicle→Invoice→Line Item and Invoice→Payments)
-- **FR-3:** Process all six CSV files (always present) - empty CSV files uploaded when shop doesn't wish to import that data type
+- **FR-3:** Process all CSV files (always present) - empty CSV files uploaded when shop doesn't wish to import that data type
 - **FR-4:** Handle self-referencing Line Items via externalParentDatalineId
 - **FR-5:** Process data in dependency order: Customer→Vehicle→Invoice→Line Item→Payments (Inventory Parts and Suppliers have no order dependency)
 - **FR-6:** Differentiate imported invoices from native invoices with visual indicators in UI
@@ -137,7 +137,7 @@ imports/{partner_id}/{shop_id}/{load_id}/
 
 ### MVP Features (Phase 1)
 - Manual file transfer by Customer Support team
-- Basic CSV ingestion with staging tables for all six entity types
+- Basic CSV ingestion with staging tables for all 5 entity types
 - Transactional upserts to production database in dependency order
 - Row count validation and basic ledger
 - Exception reporting by entity type for failed transfers

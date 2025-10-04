@@ -38,5 +38,16 @@ cloud run services describe gcp-sm-ingest --region=us-central1 --format=json
 gcloud artifacts repositories list --repository-format=docker --project="max-sm-ingest-dev"
 
 gcloud builds submit --tag "us-central1-docker.pkg.dev/$GCP_PROJECT/cloud-run-source-deploy/$JOB_NAME:latest" .
-gcloud builds submit --tag "us-central1-docker.pkg.dev/max-sm-ingest-dev/cloud-run-source-deploy/etl-processor:latest" .
+gcloud builds submit --tag "us-central1-docker.pkg.dev/max-sm-ingest-dev/cloud-run-source-deploy/etl-processor:latest"
+
+
+gcloud builds submit --tag "us-central1-docker.pkg.dev/addv1-td-alldata-app/cloud-run-source-deploy/etl-processor:latest"
+
+gcloud auth list
+gcloud config get-value project, account
+gcloud config set account `ACCOUNT`
+
+gcloud --impersonate-service-account="<SA_EMAIL>" builds submit --tag "us-central1-docker.pkg.dev/addv1-td-alldata-app/cloud-run-source-deploy/$env:etl-processor:latest"
+
+
 
